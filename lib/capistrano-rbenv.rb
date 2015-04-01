@@ -66,7 +66,7 @@ module Capistrano
           }
 
           desc("Setup rbenv.")
-          task(:setup, :except => { :no_release => true }) {
+          task(:setup) {
             #
             # skip installation if the requested version has been installed.
             #
@@ -83,7 +83,7 @@ module Capistrano
           }
           after "deploy:setup", "rbenv:setup"
 
-          task(:_setup, :except => { :no_release => true }) {
+          task(:_setup) {
             dependencies if rbenv_install_dependencies
             update
             build
@@ -121,7 +121,7 @@ module Capistrano
           end
 
           desc("Update rbenv installation.")
-          task(:update, :except => { :no_release => true }) {
+          task(:update) {
             _update_repository(rbenv_path, :scm => :git, :repository => rbenv_repository, :branch => rbenv_branch)
             plugins.update
           }
@@ -161,20 +161,20 @@ module Capistrano
             }
           end
 
-          task(:setup_default_environment, :except => { :no_release => true }) {
+          task(:setup_default_environment) {
             if rbenv_setup_default_environment
               set(:default_environment, _merge_environment(default_environment, rbenv_environment))
             end
           }
 
           desc("Purge rbenv.")
-          task(:purge, :except => { :no_release => true }) {
+          task(:purge) {
             run("rm -rf #{rbenv_path.dump}")
           }
 
           namespace(:plugins) {
             desc("Update rbenv plugins.")
-            task(:update, :except => { :no_release => true }) {
+            task(:update) {
               rbenv_plugins.each do |name, repository|
                 # for backward compatibility, obtain plugin options from :rbenv_plugins_options first
                 options = rbenv_plugins_options.fetch(name, {})
@@ -218,7 +218,7 @@ module Capistrano
             execute << "( test -f #{file.dump} || touch #{file.dump} )"
             ## (2) copy originao config to temporary file
             execute << "rm -f #{tempfile.dump}" # remove tempfile to preserve permissions of original file
-            execute << "cp -fp #{file.dump} #{tempfile.dump}" 
+            execute << "cp -fp #{file.dump} #{tempfile.dump}"
             ## (3) modify temporary file
             execute << "sed -i -e '/^#{Regexp.escape(rbenv_configure_signature)}/,/^#{Regexp.escape(rbenv_configure_signature)}/d' #{tempfile.dump}"
             execute << "echo #{rbenv_configure_signature.dump} >> #{tempfile.dump}"
@@ -248,7 +248,7 @@ module Capistrano
             end
           }
           _cset(:rbenv_configure_signature, '##rbenv:configure')
-          task(:configure, :except => { :no_release => true }) {
+          task(:configure) {
             begin
               script_file = capture("mktemp /tmp/rbenv.XXXXXXXXXX").strip
               top.put(rbenv_configure_script, script_file)
@@ -271,13 +271,13 @@ module Capistrano
               []
             end
           }
-          task(:dependencies, :except => { :no_release => true }) {
+          task(:dependencies) {
             platform.packages.install(rbenv_ruby_dependencies)
           }
 
           _cset(:rbenv_ruby_versions) { rbenv.versions }
           desc("Build ruby within rbenv.")
-          task(:build, :except => { :no_release => true }) {
+          task(:build) {
 #           reset!(:rbenv_ruby_versions)
             ruby = fetch(:rbenv_ruby_cmd, "ruby")
             if rbenv_ruby_version != "system" and not rbenv_ruby_versions.include?(rbenv_ruby_version)
@@ -287,7 +287,7 @@ module Capistrano
           }
 
           _cset(:rbenv_bundler_gem, 'bundler')
-          task(:setup_bundler, :except => { :no_release => true }) {
+          task(:setup_bundler) {
             gem = "#{rbenv_cmd} exec gem"
             if version = fetch(:rbenv_bundler_version, nil)
               query_args = "-i -n #{rbenv_bundler_gem.dump} -v #{version.dump}"
